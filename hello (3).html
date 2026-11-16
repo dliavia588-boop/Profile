@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Esperance Profile</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        /* =========================================
+           БАЗОВЫЕ ЦВЕТА И СТИЛИ
+        ========================================= */
+        :root {
+            --bg-main: #0a0a0c;       
+            --bg-panel: #15050b;      
+            --accent-red: #8b0000;    
+            --text-main: #ffffff;
+            --text-muted: #a0a0a0;
+        }
+
+        body {
+            margin: 0; padding: 0;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Roboto, Helvetica, sans-serif;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent; 
+        }
+
+        /* =========================================
+           1. ШАПКА ПРОФИЛЯ
+        ========================================= */
+        .header { position: relative; width: 100%; height: 160px; }
+        .cover-img {
+            width: 100%; height: 100%; object-fit: cover;
+            mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 100%);
+            -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 100%);
+        }
+        .menu-btn {
+            position: absolute; top: 15px; right: 15px;
+            background: rgba(0, 0, 0, 0.5); border: 1px solid var(--accent-red);
+            border-radius: 50%; width: 35px; height: 35px; color: white;
+            font-size: 20px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; backdrop-filter: blur(5px); z-index: 10;
+        }
+
+        /* =========================================
+           2. ИНФОРМАЦИЯ ПОЛЬЗОВАТЕЛЯ
+        ========================================= */
+        .profile-info { padding: 0 20px; position: relative; margin-top: -50px; }
+        .avatar-img {
+            width: 100px; height: 100px; border-radius: 50%;
+            border: 4px solid var(--bg-main); object-fit: cover; position: relative; z-index: 2;
+        }
+        .user-role { margin: 10px 0 2px 0; font-size: 24px; font-weight: bold; }
+        .user-username { margin: 0; color: var(--text-muted); font-size: 14px; }
+        
+        .tags-container { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
+        .tag {
+            background-color: var(--bg-panel); border: 1px solid var(--accent-red);
+            padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600;
+        }
+        
+        .user-uid { margin: 5px 0; font-size: 13px; color: #ccc; }
+        .user-quote {
+            margin: 10px 0; font-style: italic; color: var(--text-muted);
+            border-left: 3px solid var(--accent-red); padding-left: 10px; font-size: 14px;
+        }
+
+        /* =========================================
+           3. БЛОК БРАКА (УЗЫ)
+        ========================================= */
+        .marriage-container {
+            background-color: var(--bg-panel); border: 1px solid #3a1c28; border-radius: 16px;
+            margin: 25px 20px 0 20px; padding: 15px; display: flex; flex-direction: column;
+            align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .marriage-avatars { display: flex; align-items: center; gap: 15px; margin-bottom: 8px; }
+        .m-avatar {
+            width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent-red);
+        }
+        .m-heart {
+            font-size: 24px; animation: heartPulse 1.5s infinite; 
+            filter: drop-shadow(0 0 5px rgba(139, 0, 0, 0.8));
+        }
+        @keyframes heartPulse {
+            0% { transform: scale(1); } 15% { transform: scale(1.25); }
+            30% { transform: scale(1); } 45% { transform: scale(1.25); } 60% { transform: scale(1); }
+        }
+        .marriage-names { font-size: 14px; font-weight: bold; color: var(--text-main); margin-bottom: 3px; }
+        .marriage-days { font-size: 12px; color: var(--text-muted); font-style: italic; }
+
+        /* =========================================
+           4. ВИТРИНА КАРТ (3D-СТОПКА)
+        ========================================= */
+        .showcase-container { margin-top: 30px; padding: 20px 0; text-align: center; overflow: hidden; }
+        .section-title {
+            font-size: 18px; font-weight: bold; margin: 0 0 15px 20px;
+            text-transform: uppercase; letter-spacing: 2px; color: var(--accent-red); text-align: left;
+        }
+        .showcase-title-center { text-align: center; margin: 0 0 25px 0; }
+        .cards-stack {
+            position: relative; height: 220px; width: 100%; display: flex;
+            justify-content: center; align-items: center; cursor: pointer;
+        }
+        .card {
+            position: absolute; width: 120px; height: 180px; border-radius: 10px;
+            object-fit: cover; border: 2px solid #2a2a2a; box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            transition: all 0.6s cubic-bezier(0.25, 0.8, 0.25, 1); transform-origin: bottom center;
+        }
+
+        .card-1 { z-index: 1; transform: translateX(-60px) scale(0.85) rotate(-10deg); filter: brightness(0.5); }
+        .card-2 { z-index: 2; transform: translateX(-30px) scale(0.9) rotate(-5deg); filter: brightness(0.7); }
+        .card-3 { z-index: 5; transform: translateX(0) scale(1) rotate(0deg); border-color: var(--accent-red); } 
+        .card-4 { z-index: 2; transform: translateX(30px) scale(0.9) rotate(5deg); filter: brightness(0.7); }
+        .card-5 { z-index: 1; transform: translateX(60px) scale(0.85) rotate(10deg); filter: brightness(0.5); }
+
+        .cards-stack.fan-out .card-1 { transform: translateX(-110px) translateY(10px) scale(0.9) rotate(-25deg); filter: brightness(0.9); z-index: 5;}
+        .cards-stack.fan-out .card-2 { transform: translateX(-55px) translateY(-10px) scale(0.95) rotate(-12deg); filter: brightness(1); z-index: 5;}
+        .cards-stack.fan-out .card-3 { transform: translateX(0) translateY(-20px) scale(1.05) rotate(0deg); filter: brightness(1); z-index: 5;}
+        .cards-stack.fan-out .card-4 { transform: translateX(55px) translateY(-10px) scale(0.95) rotate(12deg); filter: brightness(1); z-index: 5;}
+        .cards-stack.fan-out .card-5 { transform: translateX(110px) translateY(10px) scale(0.9) rotate(25deg); filter: brightness(0.9); z-index: 5;}
+
+        /* =========================================
+           5. КАРУСЕЛИ: ДОСТИЖЕНИЯ И ПОДАРКИ
+        ========================================= */
+        .carousel-wrapper { margin-top: 30px; }
+        .carousel { display: flex; overflow-x: auto; gap: 15px; padding: 0 20px 20px 20px; scroll-snap-type: x mandatory; }
+        .carousel::-webkit-scrollbar { display: none; } 
+
+        .achiev-card { min-width: 85px; display: flex; flex-direction: column; align-items: center; scroll-snap-align: start; flex-shrink: 0; cursor: pointer; }
+        .achiev-icon-wrapper { width: 70px; height: 70px; border-radius: 16px; background-color: var(--bg-panel); border: 1px solid #3a1c28; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: transform 0.2s; }
+        .achiev-card:active .achiev-icon-wrapper { transform: scale(0.95); }
+        .achiev-img { width: 40px; height: 40px; object-fit: contain; }
+        .achiev-name { font-size: 11px; color: var(--text-main); text-align: center; line-height: 1.2; font-weight: 600; }
+        
+        .achiev-card.locked .achiev-icon-wrapper { filter: grayscale(100%); opacity: 0.4; border-color: #222; }
+        .achiev-card.locked .achiev-name { color: #555; }
+
+        .gift-card { min-width: 140px; max-width: 140px; background-color: var(--bg-panel); border: 1px solid #3a1c28; border-radius: 12px; padding: 15px; scroll-snap-align: start; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; text-align: center; }
+        .gift-img { width: 60px; height: 60px; object-fit: contain; margin-bottom: 12px; }
+        .gift-from { font-size: 12px; color: var(--accent-red); font-weight: bold; margin-bottom: 6px; }
+        .gift-msg { font-size: 11px; color: var(--text-muted); font-style: italic; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+        /* =========================================
+           6. ВЫЕЗЖАЮЩЕЕ МЕНЮ (ШТОРКА)
+        ========================================= */
+        .menu-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .menu-overlay.active { opacity: 1; pointer-events: auto; }
+        .bottom-sheet { position: fixed; bottom: 0; left: 0; right: 0; background-color: var(--bg-panel); border-top: 1px solid var(--accent-red); border-radius: 20px 20px 0 0; padding: 15px 20px 30px 20px; z-index: 101; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); box-shadow: 0 -5px 20px rgba(0,0,0,0.8); }
+        .bottom-sheet.active { transform: translateY(0); }
+        .sheet-drag-line { width: 40px; height: 4px; background-color: #3a1c28; border-radius: 2px; margin: 0 auto 20px auto; }
+        .menu-list { list-style: none; padding: 0; margin: 0; }
+        .menu-item { padding: 15px 10px; border-bottom: 1px solid #2a111b; font-size: 16px; font-weight: 500; display: flex; align-items: center; gap: 15px; cursor: pointer; transition: background 0.2s; }
+        .menu-item:last-child { border-bottom: none; }
+        .menu-item:active { background-color: #2a111b; border-radius: 8px;}
+        .menu-icon { font-size: 20px; }
+
+        /* =========================================
+           7. ПОЛНОЭКРАННЫЕ ОКНА (МАГАЗИН И НАВИГАЦИЯ)
+        ========================================= */
+        .fullscreen-modal { position: fixed; top: 100%; left: 0; right: 0; bottom: 0; background-color: var(--bg-main); z-index: 200; transition: top 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); display: flex; flex-direction: column; }
+        .fullscreen-modal.active { top: 0; } 
+        .modal-header { padding: 20px; background-color: var(--bg-panel); border-bottom: 1px solid var(--accent-red); display: flex; align-items: center; justify-content: space-between; }
+        .modal-title-wrapper h2 { margin: 0; font-size: 20px; color: var(--text-main); }
+        .modal-balance { font-size: 14px; color: #ffd700; font-weight: bold; margin-top: 5px; }
+        .modal-close { font-size: 28px; color: var(--text-muted); cursor: pointer; padding: 0 10px; }
+        
+        .shop-grid { padding: 20px; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding-bottom: 40px; }
+        .shop-item { background-color: var(--bg-panel); border: 1px solid #3a1c28; border-radius: 12px; padding: 15px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+        .shop-item img { width: 70px; height: 70px; object-fit: contain; margin-bottom: 10px; border-radius: 8px; }
+        .shop-item h3 { font-size: 14px; margin: 0 0 5px 0; color: var(--text-main); }
+        .shop-item p { font-size: 11px; color: var(--text-muted); flex-grow: 1; margin: 0 0 12px 0; }
+        .buy-btn { background-color: var(--accent-red); color: white; border: none; padding: 8px 0; width: 100%; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; }
+        .buy-btn:active { transform: scale(0.95); }
+
+        .nav-list { padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; padding-bottom: 40px; }
+        .chat-btn { background: linear-gradient(135deg, #2a0a18 0%, #15050b 100%); border: 1px solid var(--accent-red); border-radius: 12px; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: transform 0.2s; }
+        .chat-btn:active { transform: scale(0.97); }
+        .chat-info { display: flex; flex-direction: column; gap: 5px; }
+        .chat-name { font-size: 16px; font-weight: bold; margin: 0; color: var(--text-main); }
+        .chat-desc { font-size: 12px; color: var(--text-muted); margin: 0; }
+        .chat-icon { font-size: 20px; }
+        .chat-btn.locked { background: #111; border-color: #333; filter: grayscale(100%); cursor: not-allowed; }
+        .chat-btn.locked:active { transform: none; }
+        .chat-btn.locked .chat-name { color: #888; }
+
+        /* =========================================
+           8. ДИАЛОГОВОЕ ОКНО ПОДАРКА
+        ========================================= */
+        .gift-modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 300; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+        .gift-modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .gift-dialog { background-color: var(--bg-panel); width: 85%; max-width: 320px; border-radius: 16px; border: 1px solid var(--accent-red); padding: 20px; transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
+        .gift-modal-overlay.active .gift-dialog { transform: scale(1); }
+        .gift-dialog h3 { margin-top: 0; text-align: center; font-size: 16px; color: var(--text-main); margin-bottom: 15px; }
+        .gift-dialog label { font-size: 12px; color: var(--text-muted); margin-bottom: 5px; display: block; }
+        .gift-select, .gift-textarea { width: 100%; background-color: var(--bg-main); color: var(--text-main); border: 1px solid #3a1c28; border-radius: 8px; padding: 10px; margin-bottom: 15px; box-sizing: border-box; font-family: inherit; }
+        .gift-textarea { resize: none; height: 60px; }
+        .gift-select:focus, .gift-textarea:focus { outline: none; border-color: var(--accent-red); }
+        .gift-buttons { display: flex; gap: 10px; }
+        .btn-cancel, .btn-send { flex: 1; padding: 10px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .btn-cancel { background-color: #333; color: white; }
+        .btn-send { background-color: var(--accent-red); color: white; }
+        .btn-cancel:active, .btn-send:active { transform: scale(0.95); }
+
+        /* =========================================
+           9. ОКНО ДОСТИЖЕНИЙ (СЕТКА)
+        ========================================= */
+        .achiev-grid { padding: 20px; overflow-y: auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; padding-bottom: 40px; }
+        .achiev-grid-item { display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer; }
+        .achiev-grid-item .icon-wrapper { width: 100%; aspect-ratio: 1/1; max-height: 80px; border-radius: 16px; background-color: var(--bg-panel); border: 1px solid #3a1c28; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: transform 0.2s; }
+        .achiev-grid-item:active .icon-wrapper { transform: scale(0.95); }
+        .achiev-grid-item img { width: 50%; height: 50%; object-fit: contain; }
+        .achiev-grid-item h3 { font-size: 11px; margin: 0; color: var(--text-main); line-height: 1.2;}
+        .achiev-grid-item.locked .icon-wrapper { filter: grayscale(100%); opacity: 0.4; border-color: #222; }
+        .achiev-grid-item.locked h3 { color: #555; }
+
+        /* =========================================
+           10. ОКНО НАСТРОЕК
+        ========================================= */
+        .settings-content { padding: 20px; overflow-y: auto; padding-bottom: 40px; }
+        .settings-group { margin-bottom: 20px; background: var(--bg-panel); padding: 15px; border-radius: 12px; border: 1px solid #3a1c28; }
+        .settings-group h3 { margin-top: 0; margin-bottom: 15px; font-size: 16px; color: var(--accent-red); border-bottom: 1px solid #3a1c28; padding-bottom: 5px; }
+        .settings-label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 5px; }
+        .settings-input, .settings-select { width: 100%; background: var(--bg-main); color: var(--text-main); border: 1px solid #3a1c28; padding: 10px; border-radius: 8px; margin-bottom: 12px; box-sizing: border-box; font-family: inherit; }
+        .settings-input:focus, .settings-select:focus { outline: none; border-color: var(--accent-red); }
+        .settings-save-btn { background: var(--accent-red); color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 10px; }
+        .settings-save-btn:active { transform: scale(0.97); }
+        .avatar-hint-btn { background: #2a111b; color: var(--text-main); border: 1px solid var(--accent-red); padding: 10px; width: 100%; border-radius: 8px; font-size: 13px; cursor: pointer; margin-bottom: 10px; }
+
+    </style>
+</head>
+<body>
+
+    <!-- =========================================
+         ШАПКА И ПРОФИЛЬ
+    ========================================= -->
+    <div class="header">
+        <img src="https://images.unsplash.com/photo-1505672678657-cc70370f5e60?q=80&w=1000&auto=format&fit=crop" class="cover-img" alt="Cover">
+        <div class="menu-btn" id="menuBtn">⋮</div>
+    </div>
+
+    <div class="profile-info">
+        <img src="https://images.unsplash.com/photo-1542740348-39501cd6e2b4?q=80&w=200&auto=format&fit=crop" class="avatar-img" alt="Avatar">
+        <h1 class="user-role">Арлекино</h1>
+        <p class="user-username">@father_esperance</p>
+        
+        <div class="tags-container">
+            <span class="tag status">Владелец</span>
+            <span class="tag title">Отец Дома Очага</span>
+        </div>
+        
+        <p class="user-uid">UID: 700000000 | В чате с 01.03.2026</p>
+        <p class="user-quote">"Мы дети тени, мы танцуем в огне."</p>
+    </div>
+
+    <!-- БРАК / УЗЫ -->
+    <div class="marriage-container" id="marriageBlock">
+        <div class="marriage-avatars">
+            <img src="https://images.unsplash.com/photo-1542740348-39501cd6e2b4?q=80&w=200&auto=format&fit=crop" class="m-avatar" alt="User">
+            <div class="m-heart">❤️</div>
+            <img src="https://cdn-icons-png.flaticon.com/512/4140/4140037.png" class="m-avatar" alt="Spouse" style="background:#222;">
+        </div>
+        <div class="marriage-names">Арлекино & Фурина</div>
+        <div class="marriage-days">Вместе 145 дней</div>
+    </div>
+
+    <!-- =========================================
+         ВИТРИНА КАРТ
+    ========================================= -->
+    <div class="showcase-container">
+        <div class="section-title showcase-title-center">Витрина</div>
+        <div class="cards-stack" id="cardsStack">
+            <img src="https://images.unsplash.com/photo-1612036782180-6f0b6ce846ce?q=80&w=300&auto=format&fit=crop" class="card card-1" alt="Card 1">
+            <img src="https://images.unsplash.com/photo-1618331835717-801e976710b2?q=80&w=300&auto=format&fit=crop" class="card card-2" alt="Card 2">
+            <img src="https://images.unsplash.com/photo-1618331835717-801e976710b2?q=80&w=300&auto=format&fit=crop" class="card card-3" alt="Card 3">
+            <img src="https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=300&auto=format&fit=crop" class="card card-4" alt="Card 4">
+            <img src="https://images.unsplash.com/photo-1605806616949-1e87b487cb2a?q=80&w=300&auto=format&fit=crop" class="card card-5" alt="Card 5">
+        </div>
+    </div>
+
+       <!-- =========================================
+         ДОСТИЖЕНИЯ И ПОДАРКИ (Карусели)
+    ========================================= -->
+    <div class="carousel-wrapper">
+        <div class="section-title">Достижения</div>
+        <div class="carousel" id="achievementsCarousel">
+            <div class="achiev-card" onclick="tg.showAlert('Достижение: Вместе навсегда\n\nВыдано за 100 дней в браке.')">
+                <div class="achiev-icon-wrapper"><img src="https://cdn-icons-png.flaticon.com/512/3176/3176294.png" class="achiev-img" alt="Achiev"></div>
+                <div class="achiev-name">Вместе<br>навсегда</div>
+            </div>
+            <div class="achiev-card" onclick="tg.showAlert('Достижение: Отец\n\nСоздатель Дома Очага.')">
+                <div class="achiev-icon-wrapper"><img src="https://cdn-icons-png.flaticon.com/512/5499/5499011.png" class="achiev-img" alt="Achiev"></div>
+                <div class="achiev-name">Отец</div>
+            </div>
+            <div class="achiev-card locked" onclick="tg.showAlert('Это достижение пока заблокировано.')">
+                <div class="achiev-icon-wrapper"><img src="https://cdn-icons-png.flaticon.com/512/179/179249.png" class="achiev-img" alt="Achiev"></div>
+                <div class="achiev-name">Богач</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="carousel-wrapper" style="margin-bottom: 40px;">
+        <div class="section-title">Подарки</div>
+        <div class="carousel" id="giftsCarousel">
+            <div class="gift-card">
+                <img src="https://cdn-icons-png.flaticon.com/512/4213/4213958.png" class="gift-img" alt="Gift">
+                <div class="gift-from">От: Фурина</div>
+                <div class="gift-msg">"Моему любимому Отцу. Пусть суд всегда будет на твоей стороне!"</div>
+            </div>
+            <div class="gift-card">
+                <img src="https://cdn-icons-png.flaticon.com/512/1055/1055183.png" class="gift-img" alt="Gift">
+                <div class="gift-from">От: Нёвиллет</div>
+                <div class="gift-msg">"В знак нашего делового сотрудничества и уважения."</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================
+         МЕНЮ (BOTTOM SHEET)
+    ========================================= -->
+    <div class="menu-overlay" id="menuOverlay"></div>
+    <div class="bottom-sheet" id="bottomMenu">
+        <div class="sheet-drag-line"></div>
+        <ul class="menu-list">
+            <li class="menu-item" onclick="openShop('Наград')"><span class="menu-icon">🛍️</span> Магазин наград</li>
+            <li class="menu-item" onclick="openShop('Подарков')"><span class="menu-icon">🎁</span> Магазин подарков</li>
+            <li class="menu-item" onclick="openShop('Пропуска')"><span class="menu-icon">🎨</span> Оформление профиля</li>
+            <li class="menu-item" onclick="openAchievements()"><span class="menu-icon">🏆</span> Достижения</li>
+            <li class="menu-item" onclick="tg.openLink('https://dliavia588-boop.github.io/Cardbot/')"><span class="menu-icon">🃏</span> Коллекция карт</li>
+            <li class="menu-item" onclick="openNavigation()"><span class="menu-icon">🧭</span> Навигация</li>
+            <li class="menu-item" onclick="openSettings()"><span class="menu-icon">⚙️</span> Настройки</li>
+            <li class="menu-item" onclick="tg.openLink('https://dliavia588-boop.github.io/esperance-rests/')"><span class="menu-icon">🍷</span> Оформить рест</li>
+        </ul>
+    </div>
+
+    <!-- =========================================
+         МАГАЗИН (МОДАЛЬНОЕ ОКНО)
+    ========================================= -->
+    <div class="fullscreen-modal" id="shopModal">
+        <div class="modal-header">
+            <div class="modal-title-wrapper">
+                <h2 id="shopTitle">Магазин</h2>
+                <div class="modal-balance">💰 Мора: <span id="userBalance">15 400</span></div>
+            </div>
+            <div class="modal-close" onclick="closeShop()">×</div>
+        </div>
+        <div class="shop-grid" id="shopGrid"></div>
+    </div>
+
+    <!-- =========================================
+         НАВИГАЦИЯ (МОДАЛЬНОЕ ОКНО)
+    ========================================= -->
+    <div class="fullscreen-modal" id="navModal">
+        <div class="modal-header">
+            <div class="modal-title-wrapper"><h2>🧭 Навигация</h2></div>
+            <div class="modal-close" onclick="closeNavigation()">×</div>
+        </div>
+        <div class="nav-list" id="navList"></div>
+    </div>
+
+    <!-- =========================================
+         ДОСТИЖЕНИЯ ФУЛЛ-ЭКРАН (МОДАЛЬНОЕ ОКНО)
+    ========================================= -->
+    <div class="fullscreen-modal" id="achievementsModal">
+        <div class="modal-header">
+            <div class="modal-title-wrapper"><h2>🏆 Достижения</h2></div>
+            <div class="modal-close" onclick="closeAchievements()">×</div>
+        </div>
+        <div class="achiev-grid" id="achievFullGrid"></div>
+    </div>
+
+    <!-- =========================================
+         НАСТРОЙКИ (МОДАЛЬНОЕ ОКНО)
+    ========================================= -->
+    <div class="fullscreen-modal" id="settingsModal">
+        <div class="modal-header">
+            <div class="modal-title-wrapper"><h2>⚙️ Настройки</h2></div>
+            <div class="modal-close" onclick="closeSettings()">×</div>
+        </div>
+        <div class="settings-content">
+            <div class="settings-group">
+                <h3>Личные данные</h3>
+                <button class="avatar-hint-btn" onclick="tg.showAlert('Чтобы изменить аватарку, отправьте фото боту в личные сообщения с командой /avatar')">📷 Изменить аватарку</button>
+                <label class="settings-label">UID Genshin Impact</label>
+                <input type="number" class="settings-input" id="setUid" value="700000000">
+                <label class="settings-label">Цитата / Статус</label>
+                <input type="text" class="settings-input" id="setQuote" value="Мы дети тени, мы танцуем в огне.">
+            </div>
+            <div class="settings-group">
+                <h3>Оформление (Из инвентаря)</h3>
+                <label class="settings-label">Обложка профиля</label>
+                <select class="settings-select" id="setCover"><option value="default">Стандартная (Угольная ночь)</option><option value="cover_1">Кровавая луна</option></select>
+                <label class="settings-label">Титул</label>
+                <select class="settings-select" id="setTitle"><option value="default">Нет титула</option><option value="title_1" selected>Отец Дома Очага</option></select>
+            </div>
+            <div class="settings-group">
+                <h3>Витрина карт (Выбери 5)</h3>
+                <label class="settings-label">Карта 1 (Левая крайняя)</label>
+                <select class="settings-select" id="setCard1"><option>Сяо</option><option selected>Арлекино</option></select>
+                <label class="settings-label">Карта 2 (Левая)</label>
+                <select class="settings-select" id="setCard2"><option>Сяо</option><option selected>Тарталья</option></select>
+                <label class="settings-label">Карта 3 (Центр - Главная)</label>
+                <select class="settings-select" id="setCard3"><option>Сяо</option><option selected>Фурина</option></select>
+                <label class="settings-label">Карта 4 (Правая)</label>
+                <select class="settings-select" id="setCard4"><option>Сяо</option><option selected>Нёвиллет</option></select>
+                <label class="settings-label">Карта 5 (Правая крайняя)</label>
+                <select class="settings-select" id="setCard5"><option>Сяо</option><option selected>Лини</option></select>
+            </div>
+            <button class="settings-save-btn" onclick="saveSettings()">Сохранить изменения</button>
+        </div>
+    </div>
+    
+      <!-- =========================================
+         ОКНО ОФОРМЛЕНИЯ ПОДАРКА
+    ========================================= -->
+    <div class="gift-modal-overlay" id="giftModalOverlay">
+        <div class="gift-dialog">
+            <h3 id="giftItemName">Название подарка</h3>
+            <label>Кому дарим?</label>
+            <select class="gift-select" id="giftRecipient">
+                <option value="">Выберите роль...</option>
+                <option value="Фурина">Фурина</option>
+                <option value="Нёвиллет">Нёвиллет</option>
+                <option value="Лини">Лини</option>
+                <option value="Навия">Навия</option>
+            </select>
+            <label>Пожелание (макс. 100 символов):</label>
+            <textarea class="gift-textarea" id="giftMessage" maxlength="100" placeholder="Напишите пару теплых слов..."></textarea>
+            <div class="gift-buttons">
+                <button class="btn-cancel" onclick="closeGiftModal()">Отмена</button>
+                <button class="btn-send" onclick="sendGift()">Отправить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================
+         SCRIPTS (ЛОГИКА)
+    ========================================= -->
+        <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.setBackgroundColor('#0a0a0c'); 
+
+        // =========================================
+        // МАГИЯ СВЯЗИ С БАЗОЙ ДАННЫХ
+        // =========================================
+        
+        // 1. Получаем ID того, кто открыл приложение
+        const tgUser = tg.initDataUnsafe?.user;
+        // Если открываем с телефона в ТГ — берем реальный ID. Если тестируем в браузере с ПК — берем ID Арлекино для теста
+        const userId = tgUser ? tgUser.id : 8045389299; 
+
+        // 2. Стучимся в Code.gs
+        google.script.run
+            .withSuccessHandler(function(data) {
+                if(data.success) {
+                    // Раскидываем данные по профилю
+                    document.querySelector('.user-role').innerText = data.role;
+                    document.querySelector('.user-username').innerText = data.username;
+                    document.getElementById('userBalance').innerText = data.balance;
+                    
+                    document.querySelector('.user-uid').innerText = `UID: ${data.uid}`;
+                    document.querySelector('.user-quote').innerText = `"${data.quote}"`;
+
+                    // Аватарка (если не заглушка)
+                    if (data.avatar && data.avatar !== 'default') {
+                        document.querySelector('.avatar-img').src = data.avatar;
+                    }
+                    // Обложка (если не заглушка)
+                    if (data.cover && data.cover !== 'default') {
+                        document.querySelector('.cover-img').src = data.cover;
+                    }
+
+                    // Плашка титула
+                    const titleTag = document.querySelector('.tag.title');
+                    if (data.title && data.title !== 'default' && data.title !== '') {
+                        titleTag.innerText = data.title;
+                        titleTag.style.display = 'inline-block';
+                    } else {
+                        titleTag.style.display = 'none'; // Прячем, если титула нет
+                    }
+
+                    // Блок брака (Прячем, если одинок)
+                    const marriageBlock = document.getElementById('marriageBlock');
+                    if (data.spouse) {
+                        document.querySelector('.marriage-names').innerText = `${data.role} & ${data.spouse}`;
+                        document.querySelector('.marriage-days').innerText = data.marriageDate ? `В браке с ${data.marriageDate}` : 'Узы вечности';
+                        marriageBlock.style.display = 'flex';
+                    } else {
+                        marriageBlock.style.display = 'none';
+                    }
+                } else {
+                    // Если пользователя нет в базе Казны
+                    document.querySelector('.user-role').innerText = 'Ошибка';
+                    document.querySelector('.user-quote').innerText = data.error;
+                }
+            })
+            .withFailureHandler(function(error) {
+                tg.showAlert('Ошибка связи с сервером: ' + error.message);
+            })
+            .getUserProfile(userId);
+
+
+        // 1. ВЕЕР КАРТ
+        const cardsStack = document.getElementById('cardsStack');
+        cardsStack.addEventListener('click', () => { cardsStack.classList.toggle('fan-out'); });
+
+        // 2. МЕНЮ
+        const menuBtn = document.getElementById('menuBtn');
+        const menuOverlay = document.getElementById('menuOverlay');
+        const bottomMenu = document.getElementById('bottomMenu');
+
+        function toggleMenu() {
+            menuOverlay.classList.toggle('active');
+            bottomMenu.classList.toggle('active');
+        }
+        menuBtn.addEventListener('click', toggleMenu);
+        menuOverlay.addEventListener('click', toggleMenu); 
+
+        // 3. МАГАЗИНЫ
+        const shopModal = document.getElementById('shopModal');
+        const shopTitle = document.getElementById('shopTitle');
+        const shopGrid = document.getElementById('shopGrid');
+
+        const mockShopData = {
+            'Наград': [
+                { id: 'a1', name: 'Сигнатурка', desc: 'Уникальное оружие, повышает статы в РП.', price: 15000, img: 'https://cdn-icons-png.flaticon.com/512/3655/3655610.png' },
+                { id: 'a2', name: 'Зелье забвения', desc: 'Сбрасывает один дебафф.', price: 5000, img: 'https://cdn-icons-png.flaticon.com/512/3050/3050529.png' }
+            ],
+            'Подарков': [
+                { id: 'g1', name: 'Букет Сесилий', desc: 'Знак искренних и нежных чувств.', price: 2000, img: 'https://cdn-icons-png.flaticon.com/512/3069/3069172.png' },
+                { id: 'g2', name: 'Вино из одуванчиков', desc: 'Отличный повод расслабиться.', price: 3500, img: 'https://cdn-icons-png.flaticon.com/512/869/869063.png' }
+            ],
+            'Пропуска': [
+                { id: 'p1', name: 'Обложка: Бездна', desc: 'Темный фон с россыпью звезд.', price: 10000, img: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=200' },
+                { id: 'p2', name: 'Титул "Легенда"', desc: 'Золотая плашка в профиль.', price: 25000, img: 'https://cdn-icons-png.flaticon.com/512/5499/5499011.png' }
+            ]
+        };
+
+        function openShop(shopName) {
+            toggleMenu(); 
+            shopTitle.innerText = 'Магазин ' + shopName;
+            shopGrid.innerHTML = ''; 
+            
+            const items = mockShopData[shopName];
+            if (items && items.length > 0) {
+                items.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = 'shop-item';
+                    card.innerHTML = `
+                        <img src="${item.img}" alt="${item.name}">
+                        <h3>${item.name}</h3>
+                        <p>${item.desc}</p>
+                        <button class="buy-btn" onclick="initiatePurchase('${shopName}', '${item.id}', '${item.name}', ${item.price})">
+                            ${item.price.toLocaleString()} 💰
+                        </button>
+                    `;
+                    shopGrid.appendChild(card);
+                });
+            }
+            shopModal.classList.add('active'); 
+        }
+        function closeShop() { shopModal.classList.remove('active'); }
+
+        // 4. ОФОРМЛЕНИЕ ПОДАРКА И ПОКУПОК
+        let currentGiftItem = null; 
+        function initiatePurchase(shopType, itemId, itemName, price) {
+            if (shopType === 'Подарков') {
+                currentGiftItem = { id: itemId, name: itemName, price: price };
+                document.getElementById('giftItemName').innerText = `Подарок: ${itemName} (${price} 💰)`;
+                document.getElementById('giftRecipient').value = '';
+                document.getElementById('giftMessage').value = '';
+                document.getElementById('giftModalOverlay').classList.add('active');
+            } else {
+                tg.showConfirm(`Купить предмет "${itemName}" за ${price} Моры?`, function(confirm) {
+                    if (confirm) { tg.showAlert(`Покупка совершена! Списано ${price} Моры.`); }
+                });
+            }
+        }
+        function closeGiftModal() { document.getElementById('giftModalOverlay').classList.remove('active'); currentGiftItem = null; }
+        function sendGift() {
+            const recipient = document.getElementById('giftRecipient').value;
+            if (!recipient) { tg.showAlert('Выберите получателя!'); return; }
+            tg.showConfirm(`Отправить "${currentGiftItem.name}" для ${recipient} за ${currentGiftItem.price} Моры?`, function(confirm) {
+                if (confirm) {
+                    closeGiftModal(); closeShop();      
+                    tg.showAlert(`Подарок отправлен! Списано ${currentGiftItem.price} Моры.`);
+                }
+            });
+        }
+
+        // 5. НАВИГАЦИЯ
+        const navModal = document.getElementById('navModal');
+        const navList = document.getElementById('navList');
+        const mockChatsData = [
+            { id: 'tavern', name: 'Таверна «Хвост Кошки»', desc: 'Свободное РП, ламповое общение и игры.', link: 'https://t.me/telegram', isLocked: false },
+            { id: 'mafia', name: 'Подпольная арена', desc: 'Бои без правил и ставки (18+).', link: 'https://t.me/telegram', isLocked: true },
+            { id: 'council', name: 'Зал собраний', desc: 'Закрытая зона администрации.', link: 'https://t.me/telegram', isLocked: true }
+        ];
+
+        function openNavigation() {
+            toggleMenu(); navList.innerHTML = '';
+            mockChatsData.forEach(chat => {
+                const btn = document.createElement('div');
+                btn.className = `chat-btn ${chat.isLocked ? 'locked' : ''}`;
+                btn.innerHTML = `
+                    <div class="chat-info"><h3 class="chat-name">${chat.name}</h3><p class="chat-desc">${chat.desc}</p></div>
+                    <div class="chat-icon">${chat.isLocked ? '🔒' : '➡️'}</div>
+                `;
+                btn.onclick = () => {
+                    if (chat.isLocked) { tg.showAlert('Доступ закрыт. Выполните условия или обратитесь к администратору.'); } 
+                    else { tg.openTelegramLink(chat.link); }
+                };
+                navList.appendChild(btn);
+            });
+            navModal.classList.add('active');
+        }
+        function closeNavigation() { navModal.classList.remove('active'); }
+
+        // 6. ДОСТИЖЕНИЯ 
+        const achievModal = document.getElementById('achievementsModal');
+        const achievFullGrid = document.getElementById('achievFullGrid');
+        const mockAllAchievements = [
+            { id: 'ach1', name: 'Вместе навсегда', desc: 'Провести 100 дней в браке.', img: 'https://cdn-icons-png.flaticon.com/512/3176/3176294.png', locked: false },
+            { id: 'ach2', name: 'Отец', desc: 'Создатель Дома Очага.', img: 'https://cdn-icons-png.flaticon.com/512/5499/5499011.png', locked: false },
+            { id: 'ach3', name: 'Богач', desc: 'Накопить 100,000 Моры.', img: 'https://cdn-icons-png.flaticon.com/512/179/179249.png', locked: true },
+            { id: 'ach4', name: 'Дуэлянт', desc: 'Победить на арене 10 раз.', img: 'https://cdn-icons-png.flaticon.com/512/751/751432.png', locked: true },
+            { id: 'ach5', name: 'Шопоголик', desc: 'Скупить половину магазина.', img: 'https://cdn-icons-png.flaticon.com/512/3081/3081840.png', locked: true },
+            { id: 'ach6', name: 'Свой в доску', desc: 'Написать 10 000 сообщений.', img: 'https://cdn-icons-png.flaticon.com/512/1041/1041916.png', locked: false }
+        ];
+
+        function openAchievements() {
+            toggleMenu(); achievFullGrid.innerHTML = ''; 
+            mockAllAchievements.forEach(ach => {
+                const item = document.createElement('div');
+                item.className = `achiev-grid-item ${ach.locked ? 'locked' : ''}`;
+                item.innerHTML = `<div class="icon-wrapper"><img src="${ach.img}" alt="Icon"></div><h3>${ach.name}</h3>`;
+                item.onclick = () => {
+                    const statusText = ach.locked ? '🔒 ЗАБЛОКИРОВАНО\n\n' : '✅ ПОЛУЧЕНО\n\n';
+                    tg.showAlert(`${statusText}${ach.name}\n\n${ach.desc}`);
+                };
+                achievFullGrid.appendChild(item);
+            });
+            achievModal.classList.add('active');
+        }
+        function closeAchievements() { achievModal.classList.remove('active'); }
+
+        // 7. НАСТРОЙКИ
+        const settingsModal = document.getElementById('settingsModal');
+        function openSettings() { toggleMenu(); settingsModal.classList.add('active'); }
+        function closeSettings() { settingsModal.classList.remove('active'); }
+        function saveSettings() {
+            tg.showConfirm('Сохранить изменения профиля?', function(confirm) {
+                if(confirm) {
+                    closeSettings();
+                    tg.showAlert('Настройки успешно сохранены!');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
