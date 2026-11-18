@@ -441,20 +441,21 @@
         tg.expand();
         tg.setBackgroundColor('#0a0a0c'); 
 
-        // =========================================
-        // МАГИЯ СВЯЗИ С БАЗОЙ ДАННЫХ
-        // =========================================
-        
+
         // 1. Получаем ID того, кто открыл приложение
         const tgUser = tg.initDataUnsafe?.user;
-        // Если открываем с телефона в ТГ — берем реальный ID. Если тестируем в браузере с ПК — берем ID Арлекино для теста
         const userId = tgUser ? tgUser.id : 8045389299; 
 
-        // 2. Стучимся в Code.gs
-        google.script.run
-            .withSuccessHandler(function(data) {
+        // =========================================
+        // МАГИЯ СВЯЗИ С БАЗОЙ ДАННЫХ ЧЕРЕЗ FETCH
+        // =========================================
+        // ВСТАВЬ СЮДА СВОЮ ССЫЛКУ ИЗ GOOGLE APPS SCRIPT:
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycby5v0yNCbl4xvIIj2amnt84V7NdA6YPpWInxcaAaD823wmTkZGMLKGQI8UWReC5w78Q/exec'; 
+
+        fetch(GAS_URL + '?tgId=' + userId)
+            .then(response => response.json())
+            .then(data => {
                 if(data.success) {
-                    // Раскидываем данные по профилю
                     document.querySelector('.user-role').innerText = data.role;
                     document.querySelector('.user-username').innerText = data.username;
                     document.getElementById('userBalance').innerText = data.balance;
@@ -462,25 +463,21 @@
                     document.querySelector('.user-uid').innerText = `UID: ${data.uid}`;
                     document.querySelector('.user-quote').innerText = `"${data.quote}"`;
 
-                    // Аватарка (если не заглушка)
                     if (data.avatar && data.avatar !== 'default') {
                         document.querySelector('.avatar-img').src = data.avatar;
                     }
-                    // Обложка (если не заглушка)
                     if (data.cover && data.cover !== 'default') {
                         document.querySelector('.cover-img').src = data.cover;
                     }
 
-                    // Плашка титула
                     const titleTag = document.querySelector('.tag.title');
                     if (data.title && data.title !== 'default' && data.title !== '') {
                         titleTag.innerText = data.title;
                         titleTag.style.display = 'inline-block';
                     } else {
-                        titleTag.style.display = 'none'; // Прячем, если титула нет
+                        titleTag.style.display = 'none';
                     }
 
-                    // Блок брака (Прячем, если одинок)
                     const marriageBlock = document.getElementById('marriageBlock');
                     if (data.spouse) {
                         document.querySelector('.marriage-names').innerText = `${data.role} & ${data.spouse}`;
@@ -490,16 +487,14 @@
                         marriageBlock.style.display = 'none';
                     }
                 } else {
-                    // Если пользователя нет в базе Казны
                     document.querySelector('.user-role').innerText = 'Ошибка';
                     document.querySelector('.user-quote').innerText = data.error;
                 }
             })
-            .withFailureHandler(function(error) {
+            .catch(error => {
                 tg.showAlert('Ошибка связи с сервером: ' + error.message);
-            })
-            .getUserProfile(userId);
-
+            });
+            
 
         // 1. ВЕЕР КАРТ
         const cardsStack = document.getElementById('cardsStack');
