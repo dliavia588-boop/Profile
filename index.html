@@ -137,21 +137,16 @@
         .settings-input:focus, .settings-select:focus { outline: none; border-color: var(--accent-red); }
         .settings-save-btn { background: var(--accent-red); color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 10px; }
 
-        /* СОБЫТИЯ (ИВЕНТЫ) */
-        .events-content { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
-        .timeline-container { display: flex; overflow-x: auto; overflow-y: visible; gap: 15px; padding: 25px 20px 20px 20px; border-bottom: 1px solid #3a1c28; background: var(--bg-panel); }
-        .timeline-container::-webkit-scrollbar { display: none; }
-        .timeline-item { min-width: 90px; display: flex; flex-direction: column; align-items: center; text-align: center; }
-        .timeline-icon { width: 45px; height: 45px; border-radius: 50%; background: var(--bg-main); border: 2px solid var(--accent-red); display: flex; align-items: center; justify-content: center; margin-bottom: 8px; font-size: 20px; flex-shrink: 0;}
-        .timeline-date { font-size: 10px; color: var(--accent-red); font-weight: bold; margin-bottom: 3px; }
-        .timeline-title { font-size: 10px; color: var(--text-main); line-height: 1.2; }
-
-        .feed-container { padding: 20px; display: flex; flex-direction: column; gap: 25px; padding-bottom: 50px; }
-        .feed-card { display: flex; flex-direction: column; gap: 10px; }
-        .feed-header h3 { margin: 0; color: var(--accent-red); font-size: 18px; }
-        .feed-banner { width: 100%; height: 140px; border-radius: 12px; object-fit: cover; border: 1px solid #3a1c28; background-color: #222; }
-        .feed-text { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
-        .feed-link { color: var(--accent-red); text-decoration: none; font-weight: bold; }
+        /* НОВЫЙ ДИЗАЙН СОБЫТИЙ (ВЕРТИКАЛЬНЫЙ) */
+        .events-content { padding: 20px; overflow-y: auto; padding-bottom: 40px; display: flex; flex-direction: column; gap: 20px; }
+        .event-card { background-color: var(--bg-panel); border: 1px solid #3a1c28; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .event-banner { width: 100%; height: 160px; object-fit: cover; background-color: #222; border-bottom: 2px solid var(--accent-red); }
+        .event-body { padding: 15px; }
+        .event-date { display: inline-block; background-color: var(--accent-red); color: white; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+        .event-title { margin: 0 0 8px 0; font-size: 18px; color: var(--text-main); }
+        .event-desc { font-size: 13px; color: var(--text-muted); line-height: 1.4; margin: 0 0 15px 0; }
+        .event-link { display: inline-flex; align-items: center; justify-content: center; background-color: #2a111b; color: var(--text-main); border: 1px solid var(--accent-red); padding: 10px; width: 100%; border-radius: 8px; font-size: 13px; font-weight: bold; text-decoration: none; box-sizing: border-box; }
+        .event-link:active { background-color: var(--accent-red); }
 
     </style>
 </head>
@@ -204,8 +199,9 @@
     <div class="carousel-wrapper">
         <div class="section-title">Достижения</div>
         <div class="carousel" id="achievementsCarousel">
-            <div class="achiev-card"><div class="achiev-icon-wrapper"><img src="https://cdn-icons-png.flaticon.com/512/3176/3176294.png" class="achiev-img"></div><div class="achiev-name">Вместе<br>навсегда</div></div>
-            <div class="achiev-card"><div class="achiev-icon-wrapper"><img src="https://cdn-icons-png.flaticon.com/512/5499/5499011.png" class="achiev-img"></div><div class="achiev-name">Отец</div></div>
+            <div class="achiev-card" onclick="tg.showAlert('Достижение: Вместе навсегда\n\nВыдано за 100 дней в браке.')"><div class="achiev-icon-wrapper"><img src="https://cdn-icons-png.flaticon.com/512/3176/3176294.png" class="achiev-img"></div><div class="achiev-name">Вместе<br>навсегда</div></div>
+            <div class="achiev-card" onclick="tg.showAlert('Достижение: Отец\n\nСоздатель Дома Очага.')"><div class="achiev-icon-wrapper"><img src="https://cdn-icons-png.flaticon.com/512/5499/5499011.png" class="achiev-img"></div><div class="achiev-name">Отец</div></div>
+            <div class="achiev-card locked" onclick="tg.showAlert('Это достижение пока заблокировано.')"><div class="achiev-icon-wrapper"><img src="https://cdn-icons-png.flaticon.com/512/179/179249.png" class="achiev-img"></div><div class="achiev-name">Богач</div></div>
         </div>
     </div>
 
@@ -280,42 +276,34 @@
         </div>
     </div>
 
-    <!-- СОБЫТИЯ -->
+    <!-- СОБЫТИЯ (НОВЫЙ ВИД) -->
     <div class="fullscreen-modal" id="eventsModal">
         <div class="modal-header">
             <div class="modal-title-wrapper"><h2>📅 События</h2></div>
             <div class="modal-close" onclick="closeEvents()">×</div>
         </div>
         <div class="events-content">
-            <div class="timeline-container">
-                <div class="timeline-item">
-                    <div class="timeline-icon" style="border-color: #4169E1;">❄️</div>
-                    <div class="timeline-date">21.11 - 05.12</div>
-                    <div class="timeline-title">Зимняя ярмарка</div>
-                </div>
-                <div class="timeline-item">
-                    <div class="timeline-icon" style="border-color: #ffd700;">🌟</div>
-                    <div class="timeline-date">01.12 - 15.12</div>
-                    <div class="timeline-title">Парад звезд</div>
-                </div>
-                <div class="timeline-item">
-                    <div class="timeline-icon" style="border-color: #32CD32;">🌿</div>
-                    <div class="timeline-date">10.12 - 20.12</div>
-                    <div class="timeline-title">Испытание леса</div>
+            
+            <div class="event-card">
+                <img src="https://placehold.co/600x300/15050b/8b0000?text=Зимняя+ярмарка" class="event-banner">
+                <div class="event-body">
+                    <div class="event-date">❄️ 21 Ноя — 05 Дек</div>
+                    <h3 class="event-title">Зимняя ярмарка Эсперанса</h3>
+                    <p class="event-desc">Грядет великое похолодание! Готовьте свои запасы, участвуйте в мини-играх и получайте редкие аватарки в нашем новом ивенте.</p>
+                    <a href="#" class="event-link">Читать подробности ➡️</a>
                 </div>
             </div>
-            <div class="feed-container">
-                <div class="feed-card">
-                    <div class="feed-header"><h3>Зимняя ярмарка Эсперанса</h3></div>
-                    <img src="https://images.unsplash.com/photo-1542314831-c6a4d14eff40?q=80&w=600" class="feed-banner">
-                    <div class="feed-text">Грядет великое похолодание! Готовьте свои запасы, участвуйте в мини-играх и получайте редкие аватарки в нашем новом ивенте.<br><br><a href="#" class="feed-link">👉 Читать подробности</a></div>
-                </div>
-                <div class="feed-card">
-                    <div class="feed-header"><h3>Обновление магазина</h3></div>
-                    <img src="https://images.unsplash.com/photo-1612036782180-6f0b6ce846ce?q=80&w=600" class="feed-banner">
-                    <div class="feed-text">В лавку добавлены новые цветовые темы и уникальные зелья алхимии. Заглядывайте к торговцу!<br><br><a href="#" class="feed-link">👉 Перейти в магазин</a></div>
+
+            <div class="event-card">
+                <img src="https://placehold.co/600x300/15050b/8b0000?text=Обновление+магазина" class="event-banner">
+                <div class="event-body">
+                    <div class="event-date">🛍️ 01 Дек — 15 Дек</div>
+                    <h3 class="event-title">Обновление магазина</h3>
+                    <p class="event-desc">В лавку добавлены новые цветовые темы и уникальные зелья алхимии. Заглядывайте к торговцу!</p>
+                    <a href="#" class="event-link" onclick="closeEvents(); openShop('Пропуска'); return false;">Перейти в магазин ➡️</a>
                 </div>
             </div>
+
         </div>
     </div>
 
@@ -382,7 +370,8 @@
         // =========================================
         // СВЯЗЬ С БАЗОЙ
         // =========================================
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycby5v0yNCbl4xvIIj2amnt84V7NdA6YPpWInxcaAaD823wmTkZGMLKGQI8UWReC5w78Q/exec'; // ВСТАВЬ СЮДА СВОЮ ССЫЛКУ ИЗ 1 ШАГА
+        const GAS_URL = 'C
+            https://script.google.com/macros/s/AKfycby5v0yNCbl4xvIIj2amnt84V7NdA6YPpWInxcaAaD823wmTkZGMLKGQI8UWReC5w78Q/exec'; // ВСТАВЬ СЮДА СВОЮ ССЫЛКУ
 
         fetch(GAS_URL + '?tgId=' + userId)
             .then(response => response.json())
@@ -392,7 +381,7 @@
                     document.querySelector('.user-username').innerText = data.username;
                     document.getElementById('userBalance').innerText = data.balance;
                     
-                    // ПОДСТАНОВКА ДАТЫ ВСТУПЛЕНИЯ И СТАТУСА
+                    // ДАТА ВСТУПЛЕНИЯ И СТАТУС
                     let formattedJoinDate = data.joinDate;
                     if(formattedJoinDate) {
                         const d = new Date(formattedJoinDate);
@@ -494,7 +483,7 @@
             items.forEach(item => {
                 const card = document.createElement('div');
                 card.className = 'shop-item';
-                let shopCategory = shopTabs.style.display === 'flex' ? 'Пропуска' : category; // Передаем правильную категорию для подарков
+                let shopCategory = shopTabs.style.display === 'flex' ? 'Пропуска' : category;
                 card.innerHTML = `<img src="${item.img}"><h3>${item.name}</h3><p>${item.desc}</p>
                 <button class="buy-btn" onclick="initiatePurchase('${shopCategory}', '${item.id}', '${item.name}', ${item.price})">${item.price.toLocaleString()} 💰</button>`;
                 shopGrid.appendChild(card);
