@@ -364,6 +364,20 @@
                     <option value="#4B0082">Бездна (Фиолетовый)</option>
                 </select>
             </div>
+                        <div class="settings-group">
+                <h3>Витрина карт (Из коллекции)</h3>
+                <label class="settings-label">Слот 1 (Крайняя левая)</label>
+                <select class="settings-select" id="setCard1"></select>
+                <label class="settings-label">Слот 2 (Левая)</label>
+                <select class="settings-select" id="setCard2"></select>
+                <label class="settings-label">Слот 3 (Центральная главная)</label>
+                <select class="settings-select" id="setCard3"></select>
+                <label class="settings-label">Слот 4 (Правая)</label>
+                <select class="settings-select" id="setCard4"></select>
+                <label class="settings-label">Слот 5 (Крайняя правая)</label>
+                <select class="settings-select" id="setCard5"></select>
+                        </div>
+            
             <button class="settings-save-btn" onclick="saveSettings()">Сохранить изменения</button>
         </div>
     </div>
@@ -391,6 +405,9 @@
             ]
         };
         let userInventory = [];
+                let userOwnedCards = [];
+        let userShowcase = ['', '', '', '', ''];
+        
 
         fetch(GAS_URL + '?tgId=' + userId)
             .then(response => response.json())
@@ -407,6 +424,10 @@
                         
                     }
                     userInventory = data.inventory || [];
+                                        userOwnedCards = data.ownedCards || [];
+                    userShowcase = data.showcase || ['', '', '', '', ''];
+                    renderShowcase();
+                    
 
                     document.querySelector('.user-role').innerText = data.role;
                     document.querySelector('.user-username').innerText = data.username;
@@ -502,6 +523,32 @@ populateGiftRecipients(data.recipients || []);
             fillSelect('setTitle', 'Титулы', 'Нет титула', '', currentProfile.title);
             fillSelect('setTheme', 'Темы', 'Алая луна (Красный)', '#8b0000', currentProfile.theme);
         }
+                    // Заполняем 5 слотов Витрины открытыми картами
+            for (let i = 1; i <= 5; i++) {
+                const sel = document.getElementById('setCard' + i);
+                if (!sel) continue;
+                sel.innerHTML = '<option value="">— Пустой слот —</option>';
+                userOwnedCards.forEach(card => {
+                    const opt = document.createElement('option');
+                    opt.value = card.id;
+                    opt.innerText = card.name;
+                    sel.appendChild(opt);
+                });
+                sel.value = userShowcase[i - 1] || '';
+            }
+        }
+
+        function renderShowcase() {
+            const emptyImg = 'https://placehold.co/240x360/15050b/3a1c28?text=Пусто';
+            for (let i = 0; i < 5; i++) {
+                const imgEl = document.querySelector('.card-' + (i + 1));
+                if (!imgEl) continue;
+                const cardId = userShowcase[i];
+                const found = userOwnedCards.find(c => c.id === cardId);
+                imgEl.src = (found && found.img) ? found.img : emptyImg;
+            }
+        }
+        
 
         // ВЕЕР КАРТ И МЕНЮ
         const cardsStack = document.getElementById('cardsStack');
@@ -762,6 +809,7 @@ populateGiftRecipients(data.recipients || []);
             const newCover = document.getElementById('setCover').value;
             const newTitle = document.getElementById('setTitle').value;
             const newTheme = document.getElementById('setTheme').value;
+            const newShowcase = [1, 2, 3, 4, 5].map(i => document.getElementById('setCard' + i).value);
             const saveBtn = document.querySelector('.settings-save-btn');
 
             tg.showConfirm('Сохранить изменения профиля?', function(confirm) {
@@ -776,7 +824,8 @@ populateGiftRecipients(data.recipients || []);
                         tgId: userId,
                         uid: newUid, quote: newQuote,
                         avatar: newAvatar, cover: newCover,
-                        title: newTitle, theme: newTheme
+                        title: newTitle, theme: newTheme,
+                        showcase: newShowcase
                     })
                 })
                 .then(res => res.json())
@@ -802,7 +851,9 @@ populateGiftRecipients(data.recipients || []);
                         } else {
                             titleTag.style.display = 'none';
                         }
-
+                        userShowcase = newShowcase;
+                        renderShowcase();
+                        
                         closeSettings();
                         tg.showAlert('Настройки сохранены!');
                     } else {
