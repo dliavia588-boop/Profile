@@ -86,10 +86,14 @@
         .modal-balance { font-size: 14px; color: #ffd700; font-weight: bold; margin-top: 5px; }
         .modal-close { font-size: 28px; color: var(--text-muted); cursor: pointer; padding: 0 10px; }
         
-        .shop-tabs { display: flex; gap: 10px; padding: 15px 20px 0; background: var(--bg-main); }
-        .shop-tab { flex: 1; padding: 10px 0; background: var(--bg-panel); border: 1px solid #3a1c28; color: var(--text-muted); border-radius: 8px; cursor: pointer; font-weight: bold; }
+                .shop-tabs { display: flex; gap: 6px; padding: 15px 15px 0; background: var(--bg-main); overflow-x: auto; }
+        .shop-tabs::-webkit-scrollbar { display: none; }
+        .shop-tab { flex: 1; padding: 9px 6px; background: var(--bg-panel); border: 1px solid #3a1c28; color: var(--text-muted); border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 12px; white-space: nowrap; }
         .shop-tab.active { background: var(--accent-red); color: white; border-color: var(--accent-red); }
-
+        .theme-preview { width: 56px; height: 56px; border-radius: 50%; margin: 7px 0 15px; border: 3px solid #fff; box-shadow: 0 0 12px rgba(0,0,0,0.6); }
+        .title-preview { padding: 6px 12px; border-radius: 6px; border: 1px solid var(--accent-red); background: var(--bg-main); font-size: 12px; font-weight: bold; margin: 18px 0 22px; }
+        .buy-btn.owned { background-color: #2a2a2a; color: #888; cursor: default; }
+        
         .shop-grid { padding: 20px; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding-bottom: 40px; }
         .shop-item { background-color: var(--bg-panel); border: 1px solid #3a1c28; border-radius: 12px; padding: 15px; display: flex; flex-direction: column; align-items: center; text-align: center; }
         .shop-item img { width: 70px; height: 70px; object-fit: contain; margin-bottom: 10px; border-radius: 8px; }
@@ -248,11 +252,13 @@
             </div>
             <div class="modal-close" onclick="closeShop()">×</div>
         </div>
-        <div class="shop-tabs" id="shopTabs" style="display:none;">
-            <button class="shop-tab active" onclick="switchShopTab('Обложки')">Обложки</button>
-            <button class="shop-tab" onclick="switchShopTab('Аватарки')">Аватарки</button>
-            <button class="shop-tab" onclick="switchShopTab('Темы')">Темы</button>
-        </div>
+                <div class="shop-tabs" id="shopTabs" style="display:none;">
+            <button class="shop-tab active" data-tab="Обложки" onclick="switchShopTab('Обложки')">Обложки</button>
+            <button class="shop-tab" data-tab="Аватарки" onclick="switchShopTab('Аватарки')">Аватарки</button>
+            <button class="shop-tab" data-tab="Темы" onclick="switchShopTab('Темы')">Темы</button>
+            <button class="shop-tab" data-tab="Титулы" onclick="switchShopTab('Титулы')">Титулы</button>
+                </div>
+    
         <div class="shop-grid" id="shopGrid"></div>
     </div>
 
@@ -374,33 +380,44 @@
         // =========================================
         // СВЯЗЬ С БАЗОЙ
         // =========================================
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycby5v0yNCbl4xvIIj2amnt84V7NdA6YPpWInxcaAaD823wmTkZGMLKGQI8UWReC5w78Q/exec'; // ВСТАВЬ СЮДА СВОЮ ССЫЛКУ
+                        
+                        const GAS_URL = 'https://script.google.com/macros/s/AKfycby5v0yNCbl4xvIIj2amnt84V7NdA6YPpWInxcaAaD823wmTkZGMLKGQI8UWReC5w78Q/exec'; // <-- НЕ ЗАБУДЬ ВСТАВИТЬ СВОЮ ССЫЛКУ
+
+        let currentProfile = {};
+        let shopCatalog = {
+            'Наград': [], 'Обложки': [], 'Аватарки': [], 'Темы': [], 'Титулы': [],
+            'Подарков': [
+                { id: 'g1', name: 'Букет Сесилий', desc: 'Знак искренних и нежных чувств.', price: 2000, img: 'https://cdn-icons-png.flaticon.com/512/3069/3069172.png' }
+            ]
+        };
+        let userInventory = [];
 
         fetch(GAS_URL + '?tgId=' + userId)
             .then(response => response.json())
             .then(data => {
-                if(data.success) {
+                if (data.success) {
+                    currentProfile = data;
+                    if (data.shop) {
+                        shopCatalog['Наград'] = data.shop['Наград'] || [];
+                        shopCatalog['Обложки'] = data.shop['Обложки'] || [];
+                        shopCatalog['Аватарки'] = data.shop['Аватарки'] || [];
+                        shopCatalog['Темы'] = data.shop['Темы'] || [];
+                        shopCatalog['Титулы'] = data.shop['Титулы'] || [];
+                    }
+                    userInventory = data.inventory || [];
+
                     document.querySelector('.user-role').innerText = data.role;
                     document.querySelector('.user-username').innerText = data.username;
-                    document.getElementById('userBalance').innerText = data.balance;
-                    
-                    // ДАТА ВСТУПЛЕНИЯ И СТАТУС
+                    document.getElementById('userBalance').innerText = data.balance.toLocaleString();
+
                     let formattedJoinDate = data.joinDate;
-                    if(formattedJoinDate) {
+                    if (formattedJoinDate) {
                         const d = new Date(formattedJoinDate);
-                        if(!isNaN(d)) formattedJoinDate = d.toLocaleDateString('ru-RU');
+                        if (!isNaN(d)) formattedJoinDate = d.toLocaleDateString('ru-RU');
                     }
                     document.querySelector('.user-uid').innerText = `UID: ${data.uid} | В чате с ${formattedJoinDate || 'Неизвестно'}`;
                     document.querySelector('.tag.status').innerText = data.chatStatus || 'Участник';
-                    
                     document.querySelector('.user-quote').innerText = `"${data.quote}"`;
-                    // Применяем сохраненную тему и заполняем поля в Настройках
-                    if (data.theme) {
-                        document.documentElement.style.setProperty('--accent-red', data.theme);
-                        document.getElementById('setTheme').value = data.theme;
-                    }
-                    document.getElementById('setUid').value = data.uid !== 'Не указан' ? data.uid : '';
-                    document.getElementById('setQuote').value = data.quote || '';
 
                     if (data.avatar && data.avatar !== 'default') {
                         document.querySelector('.avatar-img').src = data.avatar;
@@ -408,6 +425,9 @@
                     }
                     if (data.cover && data.cover !== 'default') {
                         document.querySelector('.cover-img').src = data.cover;
+                    }
+                    if (data.theme) {
+                        document.documentElement.style.setProperty('--accent-red', data.theme);
                     }
 
                     const titleTag = document.querySelector('.tag.title');
@@ -422,15 +442,20 @@
                     if (data.spouse) {
                         document.querySelector('.marriage-names').innerText = `${data.role} & ${data.spouse}`;
                         let formattedDate = data.marriageDate;
-                        if(formattedDate) {
+                        if (formattedDate) {
                             const d = new Date(formattedDate);
-                            if(!isNaN(d)) formattedDate = d.toLocaleDateString('ru-RU');
+                            if (!isNaN(d)) formattedDate = d.toLocaleDateString('ru-RU');
                         }
                         document.querySelector('.marriage-days').innerText = formattedDate ? `В браке с ${formattedDate}` : 'Узы вечности';
                         marriageBlock.style.display = 'flex';
                     } else {
                         marriageBlock.style.display = 'none';
                     }
+
+                    // Заполняем Настройки из реального Инвентаря
+                    document.getElementById('setUid').value = data.uid !== 'Не указан' ? data.uid : '';
+                    document.getElementById('setQuote').value = data.quote || '';
+                    populateSettingsSelects();
                 } else {
                     document.querySelector('.user-role').innerText = 'Ошибка';
                     document.querySelector('.user-quote').innerText = data.error;
@@ -438,126 +463,199 @@
             })
             .catch(error => { console.log("Fetch Error", error); });
 
-        // ВЕЕР КАРТ
+        // ЗАПОЛНЕНИЕ ВЫПАДАЮЩИХ СПИСКОВ В НАСТРОЙКАХ ИЗ ИНВЕНТАРЯ
+        function populateSettingsSelects() {
+            const fillSelect = (selectId, type, defaultLabel, defaultVal, currentVal) => {
+                const select = document.getElementById(selectId);
+                select.innerHTML = `<option value="${defaultVal}">${defaultLabel}</option>`;
+                
+                const ownedIds = userInventory.filter(i => i.type === type).map(i => i.id);
+                let currentFound = (currentVal === defaultVal || !currentVal);
+
+                (shopCatalog[type] || []).forEach(item => {
+                    if (ownedIds.includes(item.id)) {
+                        const opt = document.createElement('option');
+                        opt.value = item.value;
+                        opt.innerText = item.name;
+                        if (item.value === currentVal) currentFound = true;
+                        select.appendChild(opt);
+                    }
+                });
+
+                // Если у игрока стоит эксклюзив (выданный админом вручную), сохраняем его в списке
+                if (!currentFound && currentVal) {
+                    const opt = document.createElement('option');
+                    opt.value = currentVal;
+                    opt.innerText = type === 'Титулы' ? currentVal : 'Текущее (Эксклюзив)';
+                    select.appendChild(opt);
+                }
+                select.value = currentVal || defaultVal;
+            };
+
+            fillSelect('setAvatar', 'Аватарки', 'Стандартная', 'default', currentProfile.avatar);
+            fillSelect('setCover', 'Обложки', 'Стандартная (Угольная ночь)', 'default', currentProfile.cover);
+            fillSelect('setTitle', 'Титулы', 'Нет титула', '', currentProfile.title);
+            fillSelect('setTheme', 'Темы', 'Алая луна (Красный)', '#8b0000', currentProfile.theme);
+        }
+
+        // ВЕЕР КАРТ И МЕНЮ
         const cardsStack = document.getElementById('cardsStack');
         cardsStack.addEventListener('click', () => { cardsStack.classList.toggle('fan-out'); });
 
-        // МЕНЮ
         const menuBtn = document.getElementById('menuBtn');
         const menuOverlay = document.getElementById('menuOverlay');
         const bottomMenu = document.getElementById('bottomMenu');
-
-        function toggleMenu() {
-            menuOverlay.classList.toggle('active');
-            bottomMenu.classList.toggle('active');
-        }
+        function toggleMenu() { menuOverlay.classList.toggle('active'); bottomMenu.classList.toggle('active'); }
         menuBtn.addEventListener('click', toggleMenu);
-        menuOverlay.addEventListener('click', toggleMenu); 
+        menuOverlay.addEventListener('click', toggleMenu);
 
-        // МАГАЗИНЫ И ПОКУПКА
+        // МАГАЗИНЫ
         const shopModal = document.getElementById('shopModal');
         const shopTitle = document.getElementById('shopTitle');
         const shopGrid = document.getElementById('shopGrid');
         const shopTabs = document.getElementById('shopTabs');
-
-        const mockShopData = {
-            'Наград': [ { id: 'a1', name: 'Сигнатурка', desc: 'Уникальное оружие, повышает статы в РП.', price: 15000, img: 'https://cdn-icons-png.flaticon.com/512/3655/3655610.png' } ],
-            'Подарков': [ { id: 'g1', name: 'Букет Сесилий', desc: 'Знак искренних и нежных чувств.', price: 2000, img: 'https://cdn-icons-png.flaticon.com/512/3069/3069172.png' } ],
-            'Обложки': [ { id: 'p1', name: 'Обложка: Бездна', desc: 'Темный фон с россыпью звезд.', price: 10000, img: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=200' } ],
-            'Аватарки': [ { id: 'av1', name: 'Аватар: Элита', desc: 'Уникальная рамка.', price: 5000, img: 'https://cdn-icons-png.flaticon.com/512/149/149071.png' } ],
-            'Темы': [ { id: 'th1', name: 'Тема: Гидро', desc: 'Синее оформление профиля.', price: 8000, img: 'https://cdn-icons-png.flaticon.com/512/3262/3262973.png' } ]
-        };
+        let activeShopCategory = 'Наград';
 
         function openShop(shopName) {
-            toggleMenu(); 
-            shopTitle.innerText = 'Магазин ' + shopName;
-            if(shopName === 'Пропуска') {
+            toggleMenu();
+            shopTitle.innerText = shopName === 'Пропуска' ? 'Оформление профиля' : 'Магазин ' + shopName;
+            if (shopName === 'Пропуска') {
                 shopTabs.style.display = 'flex';
                 switchShopTab('Обложки');
             } else {
                 shopTabs.style.display = 'none';
+                activeShopCategory = shopName;
                 renderShopGrid(shopName);
             }
-            shopModal.classList.add('active'); 
+            shopModal.classList.add('active');
         }
 
         function switchShopTab(tabName) {
-            document.querySelectorAll('.shop-tab').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
+            activeShopCategory = tabName;
+            document.querySelectorAll('.shop-tab').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === tabName);
+            });
             renderShopGrid(tabName);
         }
 
         function renderShopGrid(category) {
-            shopGrid.innerHTML = ''; 
-            const items = mockShopData[category] || [];
+            shopGrid.innerHTML = '';
+            const items = shopCatalog[category] || [];
+            if (items.length === 0) {
+                shopGrid.innerHTML = '<p style="grid-column: 1/-1; text-align:center; color:#777;">В этом разделе пока пусто</p>';
+                return;
+            }
+
             items.forEach(item => {
+                const isOwned = category !== 'Наград' && category !== 'Подарков' &&
+                    userInventory.some(inv => inv.type === category && inv.id === item.id);
+
+                let previewHtml = '';
+                if (category === 'Темы') {
+                    previewHtml = `<div class="theme-preview" style="background:${item.value};"></div>`;
+                } else if (category === 'Титулы') {
+                    previewHtml = `<div class="title-preview">${item.value}</div>`;
+                } else {
+                    const imgSrc = item.img || item.value || 'https://placehold.co/150/15050b/8b0000?text=Item';
+                    previewHtml = `<img src="${imgSrc}" style="object-fit:cover;">`;
+                }
+
                 const card = document.createElement('div');
                 card.className = 'shop-item';
-                let shopCategory = shopTabs.style.display === 'flex' ? 'Пропуска' : category;
-                card.innerHTML = `<img src="${item.img}"><h3>${item.name}</h3><p>${item.desc}</p>
-                <button class="buy-btn" onclick="initiatePurchase('${shopCategory}', '${item.id}', '${item.name}', ${item.price})">${item.price.toLocaleString()} 💰</button>`;
+                card.innerHTML = `
+                    ${previewHtml}
+                    <h3>${item.name}</h3>
+                    <p>${item.desc || ''}</p>
+                    <button class="buy-btn ${isOwned ? 'owned' : ''}" ${isOwned ? 'disabled' : ''} 
+                        onclick="initiatePurchase('${category}', '${item.id}', '${item.name.replace(/'/g, "\\'")}', ${item.price})">
+                        ${isOwned ? 'Куплено ✅' : item.price.toLocaleString() + ' 💰'}
+                    </button>
+                `;
                 shopGrid.appendChild(card);
             });
         }
         function closeShop() { shopModal.classList.remove('active'); }
 
-        // ОФОРМЛЕНИЕ ПОКУПКИ И ПОДАРКА
-        let currentGiftItem = null; 
-        function initiatePurchase(shopType, itemId, itemName, price) {
-            if (shopType === 'Подарков') {
+        // ПОКУПКА И ПОДАРКИ
+        let currentGiftItem = null;
+        function initiatePurchase(category, itemId, itemName, price) {
+            if (category === 'Подарков') {
                 currentGiftItem = { id: itemId, name: itemName, price: price };
                 document.getElementById('giftItemName').innerText = `Подарок: ${itemName} (${price} 💰)`;
                 document.getElementById('giftRecipient').value = '';
                 document.getElementById('giftMessage').value = '';
                 document.getElementById('giftModalOverlay').classList.add('active');
-            } else {
-                tg.showConfirm(`Купить предмет "${itemName}" за ${price} Моры?`, function(confirm) {
-                    if (confirm) tg.showAlert(`Покупка совершена! Списано ${price} Моры.`);
-                });
+                return;
             }
+
+            tg.showConfirm(`Купить "${itemName}" за ${price.toLocaleString()} Моры?`, function(confirm) {
+                if (!confirm) return;
+
+                fetch(GAS_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'buyItem',
+                        tgId: userId,
+                        itemType: category,
+                        itemId: itemId,
+                        price: price
+                    })
+                })
+                .then(res => res.json())
+                .then(res => {
+                    if (res.success) {
+                        currentProfile.balance = res.newBalance;
+                        document.getElementById('userBalance').innerText = res.newBalance.toLocaleString();
+                        userInventory.push({ type: category, id: itemId });
+                        populateSettingsSelects();
+                        renderShopGrid(activeShopCategory);
+                        tg.showAlert(`Покупка успешна! Остаток: ${res.newBalance.toLocaleString()} Моры.`);
+                    } else {
+                        tg.showAlert('Ошибка: ' + res.error);
+                    }
+                })
+                .catch(err => tg.showAlert('Ошибка сети: ' + err.message));
+            });
         }
+
         function closeGiftModal() { document.getElementById('giftModalOverlay').classList.remove('active'); currentGiftItem = null; }
         function sendGift() {
             const recipient = document.getElementById('giftRecipient').value;
             if (!recipient) { tg.showAlert('Выберите получателя!'); return; }
             tg.showConfirm(`Отправить "${currentGiftItem.name}" для ${recipient} за ${currentGiftItem.price} Моры?`, function(confirm) {
-                if (confirm) {
-                    closeGiftModal(); closeShop();      
-                    tg.showAlert(`Подарок отправлен! Списано ${currentGiftItem.price} Моры.`);
-                }
+                if (confirm) { closeGiftModal(); closeShop(); tg.showAlert(`Подарок отправлен!`); }
             });
         }
 
-        // СОБЫТИЯ
+        // СОБЫТИЯ, НАВИГАЦИЯ, ДОСТИЖЕНИЯ
         const eventsModal = document.getElementById('eventsModal');
         function openEvents() { toggleMenu(); eventsModal.classList.add('active'); }
         function closeEvents() { eventsModal.classList.remove('active'); }
+        function toggleEventText(btn) {
+            const card = btn.closest('.event-card');
+            card.classList.toggle('expanded');
+            btn.innerHTML = card.classList.contains('expanded') ? 'Свернуть ⬆️' : 'Читать подробности ➡️';
+        }
 
-        // НАВИГАЦИЯ И ЧАТЫ
         const navModal = document.getElementById('navModal');
         const navList = document.getElementById('navList');
         const mockChatsData = [
             { id: 'tavern', name: 'Таверна «Хвост Кошки»', desc: 'Свободное РП, ламповое общение и игры.', link: 'https://t.me/telegram', isLocked: false },
             { id: 'mafia', name: 'Подпольная арена', desc: 'Бои без правил и ставки (18+).', link: 'https://t.me/telegram', isLocked: true }
         ];
-
         function openNavigation() {
             toggleMenu(); navList.innerHTML = '';
             mockChatsData.forEach(chat => {
                 const btn = document.createElement('div');
                 btn.className = `chat-btn ${chat.isLocked ? 'locked' : ''}`;
                 btn.innerHTML = `<div class="chat-info"><h3 class="chat-name">${chat.name}</h3><p class="chat-desc">${chat.desc}</p></div><div class="chat-icon">${chat.isLocked ? '🔒' : '➡️'}</div>`;
-                btn.onclick = () => {
-                    if (chat.isLocked) tg.showAlert('Доступ закрыт.'); 
-                    else tg.openTelegramLink(chat.link);
-                };
+                btn.onclick = () => { if (chat.isLocked) tg.showAlert('Доступ закрыт.'); else tg.openTelegramLink(chat.link); };
                 navList.appendChild(btn);
             });
             navModal.classList.add('active');
         }
         function closeNavigation() { navModal.classList.remove('active'); }
-        
-        // ДОСТИЖЕНИЯ
+
         const achievModal = document.getElementById('achievementsModal');
         const achievFullGrid = document.getElementById('achievFullGrid');
         const mockAllAchievements = [
@@ -565,17 +663,13 @@
             { id: 'ach2', name: 'Отец', desc: 'Создатель Дома Очага.', img: 'https://cdn-icons-png.flaticon.com/512/5499/5499011.png', locked: false },
             { id: 'ach3', name: 'Богач', desc: 'Накопить 100,000 Моры.', img: 'https://cdn-icons-png.flaticon.com/512/179/179249.png', locked: true }
         ];
-
         function openAchievements() {
-            toggleMenu(); achievFullGrid.innerHTML = ''; 
+            toggleMenu(); achievFullGrid.innerHTML = '';
             mockAllAchievements.forEach(ach => {
                 const item = document.createElement('div');
                 item.className = `achiev-grid-item ${ach.locked ? 'locked' : ''}`;
                 item.innerHTML = `<div class="icon-wrapper"><img src="${ach.img}" alt="Icon"></div><h3>${ach.name}</h3>`;
-                item.onclick = () => {
-                    const statusText = ach.locked ? '🔒 ЗАБЛОКИРОВАНО\n\n' : '✅ ПОЛУЧЕНО\n\n';
-                    tg.showAlert(`${statusText}${ach.name}\n\n${ach.desc}`);
-                };
+                item.onclick = () => { tg.showAlert(`${ach.locked ? '🔒 ЗАБЛОКИРОВАНО' : '✅ ПОЛУЧЕНО'}\n\n${ach.name}\n\n${ach.desc}`); };
                 achievFullGrid.appendChild(item);
             });
             achievModal.classList.add('active');
@@ -586,17 +680,19 @@
         const settingsModal = document.getElementById('settingsModal');
         function openSettings() { toggleMenu(); settingsModal.classList.add('active'); }
         function closeSettings() { settingsModal.classList.remove('active'); }
-        
         function previewTheme(color) { document.documentElement.style.setProperty('--accent-red', color); }
-                function saveSettings() {
+
+        function saveSettings() {
             const newUid = document.getElementById('setUid').value.trim();
             const newQuote = document.getElementById('setQuote').value.trim();
+            const newAvatar = document.getElementById('setAvatar').value;
+            const newCover = document.getElementById('setCover').value;
+            const newTitle = document.getElementById('setTitle').value;
             const newTheme = document.getElementById('setTheme').value;
             const saveBtn = document.querySelector('.settings-save-btn');
 
             tg.showConfirm('Сохранить изменения профиля?', function(confirm) {
                 if (!confirm) return;
-
                 saveBtn.innerText = 'Сохранение...';
                 saveBtn.disabled = true;
 
@@ -605,47 +701,48 @@
                     body: JSON.stringify({
                         action: 'saveSettings',
                         tgId: userId,
-                        uid: newUid,
-                        quote: newQuote,
-                        theme: newTheme
+                        uid: newUid, quote: newQuote,
+                        avatar: newAvatar, cover: newCover,
+                        title: newTitle, theme: newTheme
                     })
                 })
                 .then(res => res.json())
                 .then(res => {
                     if (res.success) {
-                        // Сразу обновляем интерфейс без перезагрузки
                         const currentUidText = document.querySelector('.user-uid').innerText;
                         const joinPart = currentUidText.includes('|') ? ' |' + currentUidText.split('|')[1] : '';
                         document.querySelector('.user-uid').innerText = `UID: ${newUid || 'Не указан'}${joinPart}`;
                         document.querySelector('.user-quote').innerText = `"${newQuote}"`;
                         previewTheme(newTheme);
 
+                        if (newAvatar !== 'default') {
+                            document.querySelector('.avatar-img').src = newAvatar;
+                            document.getElementById('marriageUserAvatar').src = newAvatar;
+                        }
+                        if (newCover !== 'default') {
+                            document.querySelector('.cover-img').src = newCover;
+                        }
+                        const titleTag = document.querySelector('.tag.title');
+                        if (newTitle) {
+                            titleTag.innerText = newTitle;
+                            titleTag.style.display = 'inline-block';
+                        } else {
+                            titleTag.style.display = 'none';
+                        }
+
                         closeSettings();
-                        tg.showAlert('Настройки успешно сохранены в базу!');
+                        tg.showAlert('Настройки сохранены!');
                     } else {
-                        tg.showAlert('Ошибка сохранения: ' + res.error);
+                        tg.showAlert('Ошибка: ' + res.error);
                     }
                 })
-                .catch(err => {
-                    tg.showAlert('Ошибка сети: ' + err.message);
-                })
+                .catch(err => tg.showAlert('Ошибка сети: ' + err.message))
                 .finally(() => {
                     saveBtn.innerText = 'Сохранить изменения';
                     saveBtn.disabled = false;
                 });
             });
-                }
-        
-                function toggleEventText(btn) {
-            const card = btn.closest('.event-card');
-            card.classList.toggle('expanded');
-            if (card.classList.contains('expanded')) {
-                btn.innerHTML = 'Свернуть ⬆️';
-            } else {
-                btn.innerHTML = 'Читать подробности ➡️';
-            }
-                }
-        
-    </script>
+                       }
+         </script>                                                                                                         
 </body>
 </html>
