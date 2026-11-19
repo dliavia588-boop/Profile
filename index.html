@@ -522,7 +522,7 @@ populateGiftRecipients(data.recipients || []);
             fillSelect('setCover', 'Обложки', 'Стандартная (Угольная ночь)', 'default', currentProfile.cover);
             fillSelect('setTitle', 'Титулы', 'Нет титула', '', currentProfile.title);
             fillSelect('setTheme', 'Темы', 'Алая луна (Красный)', '#8b0000', currentProfile.theme);
-        }
+        
                     // Заполняем 5 слотов Витрины открытыми картами
             for (let i = 1; i <= 5; i++) {
                 const sel = document.getElementById('setCard' + i);
