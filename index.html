@@ -403,6 +403,8 @@
                         shopCatalog['Аватарки'] = data.shop['Аватарки'] || [];
                         shopCatalog['Темы'] = data.shop['Темы'] || [];
                         shopCatalog['Титулы'] = data.shop['Титулы'] || [];
+                        shopCatalog['Подарков'] = data.shop['Подарков'] || [];
+                        
                     }
                     userInventory = data.inventory || [];
 
@@ -456,6 +458,9 @@
                     document.getElementById('setUid').value = data.uid !== 'Не указан' ? data.uid : '';
                     document.getElementById('setQuote').value = data.quote || '';
                     populateSettingsSelects();
+                    renderUserGifts(data.gifts || []);
+populateGiftRecipients(data.recipients || []);
+                    
                 } else {
                     document.querySelector('.user-role').innerText = 'Ошибка';
                     document.querySelector('.user-quote').innerText = data.error;
@@ -579,14 +584,16 @@
         // ПОКУПКА И ПОДАРКИ
         let currentGiftItem = null;
         function initiatePurchase(category, itemId, itemName, price) {
-            if (category === 'Подарков') {
-                currentGiftItem = { id: itemId, name: itemName, price: price };
-                document.getElementById('giftItemName').innerText = `Подарок: ${itemName} (${price} 💰)`;
+                        if (category === 'Подарков') {
+                const giftObj = (shopCatalog['Подарков'] || []).find(g => g.id === itemId);
+                currentGiftItem = { id: itemId, name: itemName, price: price, img: giftObj ? giftObj.img : '' };
+                document.getElementById('giftItemName').innerText = `Подарок: ${itemName} (${price.toLocaleString()} 💰)`;
                 document.getElementById('giftRecipient').value = '';
                 document.getElementById('giftMessage').value = '';
                 document.getElementById('giftModalOverlay').classList.add('active');
                 return;
-            }
+                        }
+            
 
             tg.showConfirm(`Купить "${itemName}" за ${price.toLocaleString()} Моры?`, function(confirm) {
                 if (!confirm) return;
@@ -621,13 +628,77 @@
         }
 
         function closeGiftModal() { document.getElementById('giftModalOverlay').classList.remove('active'); currentGiftItem = null; }
-        function sendGift() {
-            const recipient = document.getElementById('giftRecipient').value;
-            if (!recipient) { tg.showAlert('Выберите получателя!'); return; }
-            tg.showConfirm(`Отправить "${currentGiftItem.name}" для ${recipient} за ${currentGiftItem.price} Моры?`, function(confirm) {
-                if (confirm) { closeGiftModal(); closeShop(); tg.showAlert(`Подарок отправлен!`); }
+                function renderUserGifts(gifts) {
+            const carousel = document.getElementById('giftsCarousel');
+            carousel.innerHTML = '';
+            if (!gifts.length) {
+                carousel.innerHTML = '<p style="color:#666; font-size:13px; padding:10px 0;">Подарков пока нет</p>';
+                return;
+            }
+            gifts.reverse().forEach(g => {
+                const card = document.createElement('div');
+                card.className = 'gift-card';
+                card.onclick = () => tg.showAlert(`🎁 Подарок от: ${g.from}\n\n${g.msg ? '«' + g.msg + '»' : 'Без пожелания'}`);
+                card.innerHTML = `
+                    <img src="${g.img}" class="gift-img">
+                    <div class="gift-from">От: ${g.from}</div>
+                    <div class="gift-msg">${g.msg ? '"' + g.msg + '"' : ''}</div>
+                `;
+                carousel.appendChild(card);
             });
         }
+
+        function populateGiftRecipients(list) {
+            const select = document.getElementById('giftRecipient');
+            select.innerHTML = '<option value="">Выберите роль...</option>';
+            list.sort((a, b) => a.role.localeCompare(b.role)).forEach(u => {
+                const opt = document.createElement('option');
+                opt.value = u.tgId;
+                opt.dataset.role = u.role;
+                opt.innerText = u.role;
+                select.appendChild(opt);
+            });
+        }
+
+        function sendGift() {
+            const select = document.getElementById('giftRecipient');
+            const recipientId = select.value;
+            if (!recipientId) { tg.showAlert('Выберите получателя!'); return; }
+            const recipientRole = select.options[select.selectedIndex].dataset.role;
+            const message = document.getElementById('giftMessage').value.trim();
+
+            tg.showConfirm(`Отправить «${currentGiftItem.name}» для ${recipientRole} за ${currentGiftItem.price.toLocaleString()} Моры?`, function(confirm) {
+                if (!confirm) return;
+
+                fetch(GAS_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'sendGift',
+                        tgId: userId,
+                        recipientId: recipientId,
+                        recipientRole: recipientRole,
+                        giftName: currentGiftItem.name,
+                        giftImg: currentGiftItem.img,
+                        price: currentGiftItem.price,
+                        message: message
+                    })
+                })
+                .then(res => res.json())
+                .then(res => {
+                    if (res.success) {
+                        currentProfile.balance = res.newBalance;
+                        document.getElementById('userBalance').innerText = res.newBalance.toLocaleString();
+                        closeGiftModal();
+                        closeShop();
+                        tg.showAlert(`Подарок отправлен! Остаток: ${res.newBalance.toLocaleString()} Моры.`);
+                    } else {
+                        tg.showAlert('Ошибка: ' + String(res.error).slice(0, 200));
+                    }
+                })
+                .catch(err => tg.showAlert('Ошибка сети: ' + err.message));
+            });
+        }
+        
 
         // СОБЫТИЯ, НАВИГАЦИЯ, ДОСТИЖЕНИЯ
         const eventsModal = document.getElementById('eventsModal');
