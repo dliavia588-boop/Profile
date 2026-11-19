@@ -394,6 +394,13 @@
                     document.querySelector('.tag.status').innerText = data.chatStatus || 'Участник';
                     
                     document.querySelector('.user-quote').innerText = `"${data.quote}"`;
+                    // Применяем сохраненную тему и заполняем поля в Настройках
+                    if (data.theme) {
+                        document.documentElement.style.setProperty('--accent-red', data.theme);
+                        document.getElementById('setTheme').value = data.theme;
+                    }
+                    document.getElementById('setUid').value = data.uid !== 'Не указан' ? data.uid : '';
+                    document.getElementById('setQuote').value = data.quote || '';
 
                     if (data.avatar && data.avatar !== 'default') {
                         document.querySelector('.avatar-img').src = data.avatar;
@@ -581,11 +588,54 @@
         function closeSettings() { settingsModal.classList.remove('active'); }
         
         function previewTheme(color) { document.documentElement.style.setProperty('--accent-red', color); }
-        function saveSettings() {
+                function saveSettings() {
+            const newUid = document.getElementById('setUid').value.trim();
+            const newQuote = document.getElementById('setQuote').value.trim();
+            const newTheme = document.getElementById('setTheme').value;
+            const saveBtn = document.querySelector('.settings-save-btn');
+
             tg.showConfirm('Сохранить изменения профиля?', function(confirm) {
-                if(confirm) { closeSettings(); tg.showAlert('Настройки сохранены!'); }
+                if (!confirm) return;
+
+                saveBtn.innerText = 'Сохранение...';
+                saveBtn.disabled = true;
+
+                fetch(GAS_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'saveSettings',
+                        tgId: userId,
+                        uid: newUid,
+                        quote: newQuote,
+                        theme: newTheme
+                    })
+                })
+                .then(res => res.json())
+                .then(res => {
+                    if (res.success) {
+                        // Сразу обновляем интерфейс без перезагрузки
+                        const currentUidText = document.querySelector('.user-uid').innerText;
+                        const joinPart = currentUidText.includes('|') ? ' |' + currentUidText.split('|')[1] : '';
+                        document.querySelector('.user-uid').innerText = `UID: ${newUid || 'Не указан'}${joinPart}`;
+                        document.querySelector('.user-quote').innerText = `"${newQuote}"`;
+                        previewTheme(newTheme);
+
+                        closeSettings();
+                        tg.showAlert('Настройки успешно сохранены в базу!');
+                    } else {
+                        tg.showAlert('Ошибка сохранения: ' + res.error);
+                    }
+                })
+                .catch(err => {
+                    tg.showAlert('Ошибка сети: ' + err.message);
+                })
+                .finally(() => {
+                    saveBtn.innerText = 'Сохранить изменения';
+                    saveBtn.disabled = false;
+                });
             });
-        }
+                }
+        
                 function toggleEventText(btn) {
             const card = btn.closest('.event-card');
             card.classList.toggle('expanded');
